@@ -1,24 +1,17 @@
 /*******************************************************************************
 *
-* (c) 2015 by arvero GmbH
-* arvero GmbH
-* Winchesterstraße 2
-* D-35394 Gießen
-*
-********************************************************************************
-*
 * Module      : gpio.c
 * Function    : GPIO interface functions
 * Author      : Hubert
-* Date        : 2015-10-29
+* Date        : 2015-12-26
 *
-*******************************************************************************/ 
+*******************************************************************************/
 
 #include <stdio.h>  // for snprintf()
 #include <string.h> // for strlen()
 #include <unistd.h> // for write(), close(), read()
 #include <fcntl.h>  // for open()
-#include <poll.h>      // for poll()
+#include <poll.h>   // for poll()
 #include "gpio.h"
 
 /****************************************************************
@@ -33,14 +26,15 @@
 ****************************************************************/
  
 #define SYSFS_GPIO_DIR "/sys/class/gpio"
-#define MAX_BUF 64
-#define HIGH    1
-#define LOW     0
+#define MAX_BUF        64
+#define HIGH           1
+#define LOW            0
 
 
 /****************************************************************
  * gpio_isHigh
  ****************************************************************/
+
 int gpio_isHigh(int gpio_fd)
 {
   char buf;
@@ -69,19 +63,19 @@ int gpio_isHigh(int gpio_fd)
     else
       return HIGH;
   }
-  
+
   if(fdset[0].revents & POLLERR)
   {
     printf("Error: return event of poll() is POLLERR\n");
     return LOW;
   }
-  
+
   if(fdset[0].revents & POLLHUP)
   {
     printf("Error: return event of poll() is POLLHUP\n");
     return LOW;
   }
-  
+
   if(fdset[0].revents & POLLNVAL)
   {
     printf("Error: return event of poll() is POLLNVAL\n");
@@ -100,14 +94,14 @@ int gpio_export(unsigned int gpio)
 {
   int fd, len;
   char buf[MAX_BUF];
- 
+
   fd = open(SYSFS_GPIO_DIR "/export", O_WRONLY);
   CHECK_FD(fd);
- 
+
   len = snprintf(buf, sizeof(buf), "%u", gpio);
   write(fd, buf, len);
   close(fd);
- 
+
   return 0;
 }
 
@@ -119,10 +113,10 @@ int gpio_unexport(unsigned int gpio)
 {
   int fd, len;
   char buf[MAX_BUF];
- 
+
   fd = open(SYSFS_GPIO_DIR "/unexport", O_WRONLY);
   CHECK_FD(fd);
- 
+
   len = snprintf(buf, sizeof(buf), "%u", gpio);
   write(fd, buf, len);
   close(fd);
@@ -137,17 +131,17 @@ int gpio_set_dir(unsigned int gpio, unsigned int out_flag)
 {
   int fd;
   char buf[MAX_BUF];
- 
+
   snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR  "/gpio%u/direction", gpio);
- 
+
   fd = open(buf, O_WRONLY);
   CHECK_FD(fd);
- 
+
   if(out_flag)
     write(fd, "out", 4);
   else
     write(fd, "in", 3);
- 
+
   close(fd);
   return 0;
 }
@@ -160,17 +154,17 @@ int gpio_set_value(unsigned int gpio, unsigned int value)
 {
   int fd;
   char buf[MAX_BUF];
- 
+
   snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%u/value", gpio);
- 
+
   fd = open(buf, O_WRONLY);
   CHECK_FD(fd);
- 
+
   if(value)
     write(fd, "1", 2);
   else
     write(fd, "0", 2);
- 
+
   close(fd);
   return 0;
 }
@@ -182,21 +176,21 @@ int gpio_set_value(unsigned int gpio, unsigned int value)
 int gpio_get_value(unsigned int gpio, unsigned int *value)
 {
   int fd;
-  char buf[MAX_BUF];
   char ch;
+  char buf[MAX_BUF];
 
   snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%u/value", gpio);
- 
+
   fd = open(buf, O_RDONLY);
   CHECK_FD(fd);
- 
+
   read(fd, &ch, 1);
 
   if(ch != '0')
     *value = HIGH;
   else
     *value = LOW;
- 
+
   close(fd);
   return 0;
 }
@@ -212,7 +206,7 @@ int gpio_set_edge(unsigned int gpio, char *edge)
   char buf[MAX_BUF];
 
   snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%u/edge", gpio);
- 
+
   fd = open(buf, O_WRONLY);
   CHECK_FD(fd);
 
@@ -231,10 +225,10 @@ int gpio_set_active_low(unsigned int gpio, unsigned int mode)
   char buf[MAX_BUF];
 
   snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%u/active_low", gpio);
- 
+
   fd = open(buf, O_WRONLY);
   CHECK_FD(fd);
- 
+
   if(mode)
     write(fd, "1", 2);
   else
@@ -254,7 +248,7 @@ int gpio_fd_open(unsigned int gpio)
   char buf[MAX_BUF];
 
   snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%u/value", gpio);
- 
+
   fd = open(buf, O_RDONLY | O_NONBLOCK );
   CHECK_FD(fd);
 
